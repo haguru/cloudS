@@ -8,12 +8,12 @@ import threading
 class watchList:
     def __init__(self):
         self.init()
+        self.__index = 0
         self.mod= []
         
     def init(self):
         self.__hash = {}
         self.__initFolders()
-        self.current = self.__hash.iterkeys()
         self.__initFiles()
         
     def __initFiles(self):
@@ -86,8 +86,11 @@ class watchList:
     def getFiles(self, folder):
         return self.__hash[folder][1:]
     
-    def next(self):  
-        return self.current.next()
+    def next(self):
+        self.__index +=1 
+        if self.__index>len(self.__hash.keys())-1:
+            self.__index = 0
+        return self.__hash.keys()[self.__index]
     
     def __diff(self, list1, list2):
         if len(list1)>= len(list2):
@@ -96,7 +99,7 @@ class watchList:
             diff =  list(set(list2)-set(list1))
         return diff
     
-    def updateHash(self):
+    def __updateHash(self):
         while True:
             for key in self.__hash.keys():
                 if self.__hash[key][0]!=self.mTime(key):
@@ -111,9 +114,8 @@ class watchList:
                     self.mod.append((folder+'/'+file[1]))
                     self.addFile(file[1], folder)
                     self.__hash[folder].remove(file)
-            
-        
-                
+            sleep(5)    
+               
                     
 class client:
     def __init__(self, host, port, key, cert):
@@ -174,9 +176,10 @@ List = watchList()
 List.printList()
 print "make change"
 user = str(raw_input())
-if user == 'y':
-    for x in range(List.size()):
-        #print List.mod
-        List.modified()
-        print List.mod
+threading.Thread(target = List.modified).start()
+while user =='y':
+    print List.mod
+    user = str(raw_input())
+
+        
        
